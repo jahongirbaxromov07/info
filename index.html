@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Information Page</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background-color: #f4f4f9;
+    }
+    .user-info {
+      background-color: #fff;
+      padding: 20px;
+      margin-bottom: 10px;
+      border-radius: 5px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    button {
+      padding: 10px 20px;
+      margin: 10px;
+      cursor: pointer;
+      border: none;
+      background-color: #007BFF;
+      color: white;
+      border-radius: 5px;
+      font-size: 16px;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <h1>User Information</h1>
+  <p>Click the button to collect and store user data.</p>
+  
+  <div class="user-info">
+    <p><strong>Browser Info:</strong> <span id="user-agent">Loading...</span></p>
+    <p><strong>Platform:</strong> <span id="platform">Loading...</span></p>
+    <p><strong>Language:</strong> <span id="language">Loading...</span></p>
+    <p id="geo"><strong>Geolocation:</strong> Loading...</p>
+  </div>
+  
+  <button id="storeData">Store User Data</button>
+
+  <h2>Stored User Data</h2>
+  <div id="stored-users">
+    <!-- Stored user buttons will appear here -->
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Display browser info
+      const userAgent = navigator.userAgent;
+      const platform = navigator.platform;
+      const language = navigator.language;
+
+      document.getElementById('user-agent').textContent = userAgent;
+      document.getElementById('platform').textContent = platform;
+      document.getElementById('language').textContent = language;
+
+      // Get geolocation
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+          const latitude = position.coords.latitude;
+          const longitude = position.coords.longitude;
+          document.getElementById('geo').textContent = `Latitude: ${latitude}, Longitude: ${longitude}`;
+        }, function(error) {
+          document.getElementById('geo').textContent = `Error: ${error.message}`;
+        });
+      } else {
+        document.getElementById('geo').textContent = 'Geolocation not available.';
+      }
+
+      // Button to store user data
+      document.getElementById('storeData').addEventListener('click', function() {
+        // Fetch the IP address from the serverless function
+        fetch('/.netlify/functions/get-ip')
+          .then(response => response.json())
+          .then(data => {
+            const ip = data.ip;
+            const userData = {
+              userAgent,
+              platform,
+              language,
+              ip,
+              latitude: document.getElementById('geo').textContent.includes('Latitude') ? document.getElementById('geo').textContent.split('Latitude: ')[1].split(',')[0] : 'Unknown',
+              longitude: document.getElementById('geo').textContent.includes('Longitude') ? document.getElementById('geo').textContent.split('Longitude: ')[1] : 'Unknown'
+            };
+
+            // Store user data in localStorage
+            let storedUsers = JSON.parse(localStorage.getItem('users')) || [];
+            storedUsers.push(userData);
+            localStorage.setItem('users', JSON.stringify(storedUsers));
+
+            // Display user data as buttons
+            displayStoredUsers();
+          });
+      });
+
+      // Function to display stored users
+      function displayStoredUsers() {
+        const storedUsers = JSON.parse(localStorage.getItem('users')) || [];
+        const storedUsersContainer = document.getElementById('stored-users');
+        storedUsersContainer.innerHTML = '';
+
+        storedUsers.forEach((user, index) => {
+          const userButton = document.createElement('button');
+          userButton.textContent = `User ${index + 1}`;
+          userButton.addEventListener('click', function() {
+            alert(`
+              User ${index + 1} Info:
+              User Agent: ${user.userAgent}
+              Platform: ${user.platform}
+              Language: ${user.language}
+              IP: ${user.ip}
+              Geolocation: Latitude: ${user.latitude}, Longitude: ${user.longitude}
+            `);
+          });
+          storedUsersContainer.appendChild(userButton);
+        });
+      }
+
+      // Display stored users on page load
+      displayStoredUsers();
+    });
+  </script>
+</body>
+</html>

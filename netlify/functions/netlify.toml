@@ -1,0 +1,10 @@
+[build]
+  # Funksiyalar joylashgan papka (functions folder)ni ko'rsating
+  functions = "netlify/functions"  # Netlify Functions saqlanadigan papka
+  publish = "/"  # Saytingiz joylashgan papka (boshqa fayllar uchun)
+
+[[redirects]]
+  # Serverless funksiyalarga yo'naltirish (redirect) sozlamasi
+  from = "/.netlify/functions/*"
+  to = "/.netlify/functions/:splat"  # Serverless funksiyalariga to'g'ri yo'naltirish
+  status = 200
